@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steam Game Analytics Suite</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-main: #1b2838;
+            --bg-panel: #171a21;
+            --bg-card: #2a475e;
+            --border-color: #2a475e;
+            --text-main: #c7d5e0;
+            --text-dim: #acb2b8;
+            --accent-blue: #66c0f4;
+            --accent-green: #a3d9a5;
+            --accent-red: #f87171;
+            --accent-orange: #fbbf24;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header-panel {
+            background: var(--bg-panel);
+            padding: 22px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title h2 {
+            margin: 0 0 6px 0;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 24px;
+        }
+
+        .header-title p {
+            margin: 0;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+
+        .upload-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="file"] {
+            background: var(--bg-card);
+            color: #fff;
+            padding: 8px 12px;
+            border: 1px solid #3b6484;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            background: var(--accent-blue);
+            color: #171a21;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 10px 22px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.2s ease;
+            position: relative;
+            bottom: -2px;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+            background: rgba(102, 192, 244, 0.08);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-blue);
+            border-bottom: 3px solid var(--accent-blue);
+            background: rgba(102, 192, 244, 0.12);
+        }
+
+        .badge-status {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: #0e141b;
+            margin-left: 6px;
+            color: var(--text-dim);
+            font-weight: normal;
+        }
+
+        .badge-ready {
+            color: #34d399;
+            background: rgba(52, 211, 153, 0.15);
+        }
+
+        /* KPI Cards */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            padding: 18px 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border: 1px solid #3b6484;
+        }
+
+        .kpi-value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chart-box {
+            background: var(--bg-panel);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-title {
+            font-size: 15px;
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .canvas-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Tables */
+        .table-container {
+            width: 100%;
+            max-height: 52vh;
+            overflow: auto;
+            background: var(--bg-panel);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .table-header-title {
+            padding: 12px 18px;
+            background: var(--bg-card);
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 1px solid var(--bg-panel);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-main);
+            color: var(--accent-blue);
+            position: sticky;
+            top: 45px;
+            z-index: 1;
+        }
+
+        .bundle-table th { top: 0; }
+
+        tr:hover {
+            background-color: rgba(102, 192, 244, 0.08);
+        }
+
+        .hidden { display: none !important; }
+        .text-emerald { color: #34d399; }
+        .text-rose { color: var(--accent-red); }
+        .text-blue { color: var(--accent-blue); }
+        .col-revenue { color: var(--accent-green); font-weight: bold; }
+
+        .empty-placeholder {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-dim);
+            background: var(--bg-panel);
+            border-radius: 8px;
+            border: 1px dashed var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header-panel">
+            <div class="header-title">
+                <h2>Steam Analytics Suite</h2>
+                <p id="subHeaderDesc">Tải lên file Wishlist hoặc Sales CSV từ Steamworks để phân tích tự động.</p>
+            </div>
+            <div class="upload-wrapper">
+                <input type="file" id="csvFileInput" accept=".csv" multiple />
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tabBtnWishlist" onclick="switchTab('wishlist')">
+                Wishlists <span id="badgeWishlist" class="badge-status badge-ready">Sẵn sàng</span>
+            </button>
+            <button class="tab-btn" id="tabBtnSales" onclick="switchTab('sales')">
+                Sales & Revenue <span id="badgeSales" class="badge-status">Chờ file CSV</span>
+            </button>
+        </div>
+
+        <!-- ==================== TAB 1: WISHLISTS ==================== -->
+        <div id="tabContentWishlist">
+            <!-- Wishlist KPI -->
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    <div class="kpi-value text-emerald" id="wStatAdds">0</div>
+                    <div class="kpi-label">Tổng Adds (Thêm mới)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value text-rose" id="wStatDeletes">0</div>
+                    <div class="kpi-label">Tổng Deletes (Gỡ bỏ)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value text-blue" id="wStatNet">0</div>
+                    <div class="kpi-label">Net Wishlists (Tăng ròng)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="wStatConversions" style="color: var(--accent-orange)">0</div>
+                    <div class="kpi-label">Purchases & Gifts</div>
+                </div>
+            </div>
+
+            <!-- Wishlist Chart -->
+            <div class="chart-box" style="margin-bottom: 20px;">
+                <div class="chart-title">
+                    <span>📈 Biến động Wishlists Theo Ngày</span>
+                    <span style="font-size: 12px; color: var(--text-dim);" id="wishlistRangeText"></span>
+                </div>
+                <div class="canvas-container" style="height: 330px;">
+                    <canvas id="wishlistChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Wishlist Table -->
+            <div class="table-container">
+                <div class="table-header-title">📋 Chi Tiết Wishlists Hàng Ngày</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ngày (DateLocal)</th>
+                            <th>Adds</th>
+                            <th>Deletes</th>
+                            <th>Net Wishlist</th>
+                            <th>Purchases</th>
+                            <th>Gifts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wishlistTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: SALES ==================== -->
+        <div id="tabContentSales" class="hidden">
+            <div id="salesEmptyNotice" class="empty-placeholder">
+                <h3 style="color: var(--accent-blue); margin-bottom: 8px;">Chưa có dữ liệu Sales</h3>
+                <p>Hãy tải lên file CSV xuất từ trang <strong>Steam Financial / Sales</strong> để xem báo cáo doanh thu chi tiết.</p>
+            </div>
+
+            <div id="salesDataContainer" class="hidden">
+                <!-- Sales KPI -->
+                <div class="kpi-container">
+                    <div class="kpi-card">
+                        <div class="kpi-value" id="kpiTotalUnits">0</div>
+                        <div class="kpi-label">Tổng số bản bán ròng (Net Units)</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-value col-revenue" id="kpiTotalRevenue">$0.00</div>
+                        <div class="kpi-label">Tổng doanh thu ròng (Net Sales)</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-value" id="kpiTotalCountries">0</div>
+                        <div class="kpi-label">Số quốc gia tiếp cận</div>
+                    </div>
+                </div>
+
+                <!-- Sales Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <div class="chart-title">📊 Số Bản Bán Được Theo Ngày</div>
+                        <div class="canvas-container">
+                            <canvas id="dailySalesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title">🌍 Top 10 Quốc Gia Doanh Thu Cao Nhất</div>
+                        <div class="canvas-container">
+                            <canvas id="countrySalesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bundle Table -->
+                <div class="table-container">
+                    <div class="table-header-title">📦 Phân Tích Hiệu Suất Theo Bundle / Gói Bán</div>
+                    <table class="bundle-table">
+                        <thead>
+                            <tr>
+                                <th>Tên Bundle / Hình thức bán</th>
+                                <th>Tổng Số Bản Bán Ròng (Units)</th>
+                                <th>Tổng Doanh Thu Ròng (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bundleTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Sales Raw Table -->
+                <div class="table-container">
+                    <div class="table-header-title">📋 Dữ Liệu Bán Hàng Chi Tiết (Đã lọc Retail)</div>
+                    <table>
+                        <thead id="salesTableHead"></thead>
+                        <tbody id="salesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data mặc định từ file Wishlist của bạn
+        const defaultWishlistCSV = `sep=,
+Steam Wishlisting data for 2026-08-30 - 2026-09-10
+
+DateLocal,Game,Adds,Deletes,PurchasesAndActivations,Gifts
+2026-08-30,Sea Beast Odyssey,8,0,0,0
+2026-08-31,Sea Beast Odyssey,4,0,0,0
+2026-09-02,Sea Beast Odyssey,9,0,0,0
+2026-09-03,Sea Beast Odyssey,28,2,0,0
+2026-09-04,Sea Beast Odyssey,8,0,0,0
+2026-09-05,Sea Beast Odyssey,16,1,0,0
+2026-09-06,Sea Beast Odyssey,42,2,0,0
+2026-09-07,Sea Beast Odyssey,16,0,0,0
+2026-09-08,Sea Beast Odyssey,9,0,0,0
+2026-09-09,Sea Beast Odyssey,26,1,0,0
+2026-09-10,Sea Beast Odyssey,4,0,0,0`;
+
+        let wishlistChartInstance = null;
+        let dailySalesChartInstance = null;
+        let countrySalesChartInstance = null;
+
+        function switchTab(tab) {
+            const tabWishlist = document.getElementById('tabContentWishlist');
+            const tabSales = document.getElementById('tabContentSales');
+            const btnWishlist = document.getElementById('tabBtnWishlist');
+            const btnSales = document.getElementById('tabBtnSales');
+
+            if (tab === 'wishlist') {
+                tabWishlist.classList.remove('hidden');
+                tabSales.classList.add('hidden');
+                btnWishlist.classList.add('active');
+                btnSales.classList.remove('active');
+            } else {
+                tabWishlist.classList.add('hidden');
+                tabSales.classList.remove('hidden');
+                btnWishlist.classList.remove('active');
+                btnSales.classList.add('active');
+            }
+        }
+
+        // CSV parsing hỗ trợ quotes
+        function parseCSVLine(text) {
+            let result = [];
+            let inQuote = false;
+            let value = '';
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                if (char === '"') {
+                    if (inQuote && i + 1 < text.length && text[i + 1] === '"') {
+                        value += '"';
+                        i++;
+                    } else {
+                        inQuote = !inQuote;
+                    }
+                } else if (char === ',' && !inQuote) {
+                    result.push(value);
+                    value = '';
+                } else {
+                    value += char;
+                }
+            }
+            result.push(value);
+            return result;
+        }
+
+        // Xử lý nạp file
+        document.getElementById('csvFileInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    detectAndProcessCSV(evt.target.result);
+                };
+                reader.readAsText(file);
+            });
+        });
+
+        function detectAndProcessCSV(csvText) {
+            const lower = csvText.toLowerCase();
+            if (lower.includes('datelocal') && lower.includes('wishlist')) {
+                processWishlistCSV(csvText);
+                switchTab('wishlist');
+            } else if (lower.includes('net units sold') || lower.includes('net steam sales')) {
+                processSalesCSV(csvText);
+                switchTab('sales');
+            } else {
+                // Thử đoán theo cột
+                if (lower.includes('datelocal')) {
+                    processWishlistCSV(csvText);
+                    switchTab('wishlist');
+                } else if (lower.includes('bundle name') || lower.includes('country')) {
+                    processSalesCSV(csvText);
+                    switchTab('sales');
+                } else {
+                    alert('Không xác định được định dạng CSV của Steam. Hãy kiểm tra lại file.');
+                }
+            }
+        }
+
+        // ==================== PROCESS WISHLIST ====================
+        function processWishlistCSV(csvText) {
+            const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            let headerIdx = -1;
+
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].toLowerCase().startsWith('datelocal')) {
+                    headerIdx = i;
+                    break;
+                }
+            }
+            if (headerIdx === -1) return;
+
+            const headers = parseCSVLine(lines[headerIdx]).map(h => h.trim());
+            const dataRows = [];
+
+            for (let i = headerIdx + 1; i < lines.length; i++) {
+                const parts = parseCSVLine(lines[i]).map(p => p.trim());
+                if (parts.length < headers.length) continue;
+
+                const row = {};
+                headers.forEach((h, idx) => row[h] = parts[idx]);
+
+                dataRows.push({
+                    date: row['DateLocal'],
+                    game: row['Game'] || 'Game',
+                    adds: parseInt(row['Adds']) || 0,
+                    deletes: parseInt(row['Deletes']) || 0,
+                    purchases: parseInt(row['PurchasesAndActivations']) || 0,
+                    gifts: parseInt(row['Gifts']) || 0,
+                    net: (parseInt(row['Adds']) || 0) - (parseInt(row['Deletes']) || 0)
+                });
+            }
+
+            if (!dataRows.length) return;
+
+            // Update badge
+            const badge = document.getElementById('badgeWishlist');
+            badge.innerText = `${dataRows.length} ngày`;
+            badge.classList.add('badge-ready');
+
+            // Update KPI
+            const totalAdds = dataRows.reduce((a, b) => a + b.adds, 0);
+            const totalDeletes = dataRows.reduce((a, b) => a + b.deletes, 0);
+            const totalNet = totalAdds - totalDeletes;
+            const totalConversions = dataRows.reduce((a, b) => a + b.purchases + b.gifts, 0);
+
+            document.getElementById('wStatAdds').textContent = `+${totalAdds.toLocaleString('vi-VN')}`;
+            document.getElementById('wStatDeletes').textContent = `-${totalDeletes.toLocaleString('vi-VN')}`;
+            document.getElementById('wStatNet').textContent = (totalNet >= 0 ? `+${totalNet}` : `${totalNet}`);
+            document.getElementById('wStatConversions').textContent = totalConversions.toLocaleString('vi-VN');
+
+            document.getElementById('wishlistRangeText').textContent = `${dataRows[0].date} ➝ ${dataRows[dataRows.length - 1].date} (${dataRows[0].game})`;
+
+            // Render Wishlist Table
+            const tbody = document.getElementById('wishlistTableBody');
+            tbody.innerHTML = '';
+            [...dataRows].reverse().forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500; color: #fff;">${row.date}</td>
+                    <td class="text-emerald">+${row.adds}</td>
+                    <td class="text-rose">-${row.deletes}</td>
+                    <td class="text-blue" style="font-weight: 600;">${row.net >= 0 ? '+' + row.net : row.net}</td>
+                    <td>${row.purchases}</td>
+                    <td>${row.gifts}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Render Wishlist Chart
+            renderWishlistChart(dataRows);
+        }
+
+        function renderWishlistChart(data) {
+            const ctx = document.getElementById('wishlistChart').getContext('2d');
+            if (wishlistChartInstance) wishlistChartInstance.destroy();
+
+            wishlistChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [
+                        {
+                            label: 'Adds (+)',
+                            data: data.map(d => d.adds),
+                            borderColor: '#34d399',
+                            backgroundColor: 'rgba(52, 211, 153, 0.15)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.25
+                        },
+                        {
+                            label: 'Net Wishlist',
+                            data: data.map(d => d.net),
+                            borderColor: '#66c0f4',
+                            borderDash: [4, 4],
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.25
+                        },
+                        {
+                            label: 'Deletes (-)',
+                            data: data.map(d => d.deletes),
+                            borderColor: '#f87171',
+                            backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                            borderWidth: 1.5,
+                            fill: true,
+                            tension: 0.25
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 12 } } }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#acb2b8' } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#acb2b8' } }
+                    }
+                }
+            });
+        }
+
+        // ==================== PROCESS SALES ====================
+        function processSalesCSV(csvText) {
+            const lines = csvText.split(/\r?\n/);
+            let startIndex = 0;
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith("Date")) {
+                    startIndex = i;
+                    break;
+                }
+            }
+
+            const headers = parseCSVLine(lines[startIndex]).map(h => h.trim());
+            const dateIdx = headers.findIndex(h => h.toLowerCase() === 'date');
+            const typeIdx = headers.findIndex(h => h.toLowerCase() === 'type');
+            const bundleNameIdx = headers.findIndex(h => h.toLowerCase() === 'bundle name');
+            const countryIdx = headers.findIndex(h => h.toLowerCase() === 'country');
+            const netUnitsIdx = headers.findIndex(h => h.toLowerCase() === 'net units sold');
+            const netSalesIdx = headers.findIndex(h => h.toLowerCase() === 'net steam sales (usd)');
+
+            let totalUnits = 0;
+            let totalRevenue = 0;
+            let dailyData = {};
+            let countryData = {};
+            let bundleData = {};
+
+            let headHtml = '<tr>';
+            headers.forEach(h => headHtml += `<th>${h}</th>`);
+            headHtml += '</tr>';
+            document.getElementById('salesTableHead').innerHTML = headHtml;
+
+            let bodyHtml = '';
+            let validRows = 0;
+
+            for (let i = startIndex + 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                const rowData = parseCSVLine(line).map(r => r.trim());
+                if (rowData.length < headers.length) continue;
+
+                // Lọc Retail
+                const saleType = rowData[typeIdx] ? rowData[typeIdx].toLowerCase() : '';
+                if (saleType === 'retail') continue;
+
+                validRows++;
+                bodyHtml += '<tr>';
+                rowData.forEach(cell => bodyHtml += `<td>${cell}</td>`);
+                bodyHtml += '</tr>';
+
+                const date = rowData[dateIdx];
+                const bundleName = rowData[bundleNameIdx] || 'No Bundle';
+                const country = rowData[countryIdx] || 'Unknown';
+                const netUnits = parseInt(rowData[netUnitsIdx]) || 0;
+                const netSales = parseFloat(rowData[netSalesIdx]) || 0;
+
+                totalUnits += netUnits;
+                totalRevenue += netSales;
+
+                if (date) dailyData[date] = (dailyData[date] || 0) + netUnits;
+                if (country) countryData[country] = (countryData[country] || 0) + netSales;
+
+                if (!bundleData[bundleName]) {
+                    bundleData[bundleName] = { units: 0, revenue: 0 };
+                }
+                bundleData[bundleName].units += netUnits;
+                bundleData[bundleName].revenue += netSales;
+            }
+
+            document.getElementById('salesTableBody').innerHTML = bodyHtml;
+
+            // KPI
+            document.getElementById('kpiTotalUnits').innerText = totalUnits.toLocaleString('vi-VN');
+            document.getElementById('kpiTotalRevenue').innerText = '$' + totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('kpiTotalCountries').innerText = Object.keys(countryData).length;
+
+            // Bundle table
+            let bundleHtml = '';
+            const sortedBundles = Object.keys(bundleData).sort((a,b) => bundleData[b].revenue - bundleData[a].revenue);
+            sortedBundles.forEach(b => {
+                bundleHtml += `<tr>
+                    <td style="font-weight: bold; color: var(--accent-blue);">${b}</td>
+                    <td>${bundleData[b].units.toLocaleString('vi-VN')}</td>
+                    <td class="col-revenue">$${bundleData[b].revenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                </tr>`;
+            });
+            document.getElementById('bundleTableBody').innerHTML = bundleHtml;
+
+            // Render Charts
+            const sortedDates = Object.keys(dailyData).sort();
+            renderSalesDailyChart(sortedDates, sortedDates.map(d => dailyData[d]));
+
+            const sortedCountries = Object.keys(countryData).sort((a,b) => countryData[b] - countryData[a]).slice(0, 10);
+            renderSalesCountryChart(sortedCountries, sortedCountries.map(c => countryData[c]));
+
+            // Update badge & toggle sections
+            const badge = document.getElementById('badgeSales');
+            badge.innerText = `${validRows} giao dịch`;
+            badge.classList.add('badge-ready');
+
+            document.getElementById('salesEmptyNotice').classList.add('hidden');
+            document.getElementById('salesDataContainer').classList.remove('hidden');
+        }
+
+        function renderSalesDailyChart(labels, data) {
+            if (dailySalesChartInstance) dailySalesChartInstance.destroy();
+            const ctx = document.getElementById('dailySalesChart').getContext('2d');
+            dailySalesChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Số bản bán ròng',
+                        data: data,
+                        backgroundColor: 'rgba(102, 192, 244, 0.2)',
+                        borderColor: '#66c0f4',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#acb2b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#acb2b8', stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        function renderSalesCountryChart(labels, data) {
+            if (countrySalesChartInstance) countrySalesChartInstance.destroy();
+            const ctx = document.getElementById('countrySalesChart').getContext('2d');
+            countrySalesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh thu (USD)',
+                        data: data,
+                        backgroundColor: '#a3d9a5',
+                        borderColor: '#78b57b',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#acb2b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#acb2b8' } }
+                    }
+                }
+            });
+        }
+
+        // Init default wishlist
+        window.addEventListener('DOMContentLoaded', () => {
+            processWishlistCSV(defaultWishlistCSV);
+        });
+    </script>
+</body>
+</html>
